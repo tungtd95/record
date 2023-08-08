@@ -72,10 +72,11 @@ class _WaveWidgetState extends State<WaveWidget>
   late int latestAmp = 0;
   double realAmp = 0.0;
   double phase = 0.0;
+  double realPhase = 0.0;
 
   late final AnimationController controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 100),
+    duration: const Duration(milliseconds: 90),
   );
 
   @override
@@ -89,25 +90,37 @@ class _WaveWidgetState extends State<WaveWidget>
     super.didUpdateWidget(oldWidget);
     final latestAmp = this.latestAmp;
     final newAmp = widget.amplitude;
+    final latestPhase = phase;
+    final newPhase = phase - 1.5;
     controller.reset();
     final ani = IntTween(begin: latestAmp, end: newAmp).animate(controller);
+    final aniPhase =
+        Tween<double>(begin: latestPhase, end: newPhase).animate(controller);
     ani.addListener(() {
       realAmp = pow(10, (ani.value) / 20) + 0.0;
-      phase -= 1.5;
+      setState(() {});
+    });
+    aniPhase.addListener(() {
+      realPhase = aniPhase.value;
       setState(() {});
     });
     controller.forward();
+
+    this.latestAmp = newAmp;
+    phase = newPhase;
   }
 
   @override
   Widget build(BuildContext context) {
+    print('realPhase = $realPhase');
+    print('realAmp = $realAmp');
     final sw = MediaQuery.of(context).size.width;
     return SizedBox(
       width: sw,
       height: 200,
       child: CustomPaint(
         painter: WavePainter(
-          phase: phase,
+          phase: realPhase,
           normedAmplitude: realAmp * (1.5 - 0.8),
           color: widget.color,
           frequency: 1.5,
